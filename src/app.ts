@@ -1,6 +1,7 @@
 import express, { Response, Request, NextFunction } from 'express';
 import cors from 'cors';
 
+import { requestLogger } from './middlewares/logger';
 import { idGenerator } from './utils/idGenerator';
 import books from './fakeDb';
 
@@ -12,10 +13,13 @@ app.use(cors());
 // body parser
 app.use(express.json());
 
+// custom middleware
+// app.use(requestLogger);
+
 // staitc
 app.use(express.static('public'));
 
-app.get('/books', (_, res) => {
+app.get('/books', requestLogger, (_, res) => {
   res.json(books);
 });
 
