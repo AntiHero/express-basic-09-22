@@ -1,4 +1,7 @@
+/// <reference path="../types.d.ts" />
 import type { Request, Response, NextFunction } from 'express';
+// @ts-ignore
+import supertestSession from 'supertest-session';
 import supertest from 'supertest';
 
 import { app } from '../app';
@@ -76,5 +79,22 @@ describe('teting API', () => {
     await api.get('/books').expect(200);
 
     expect(requestLogger).toHaveBeenCalledTimes(1);
+  });
+
+  test('GET /counter should increase counter by 1', async () => {
+    api = supertestSession(app);
+    expect.assertions(2);
+
+    await api.get('/counter').expect(200).expect('Content-Type', /text/);
+
+    for (const cookie of api.cookies) {
+      if (cookie.name === 'my-session') {
+        expect(
+          JSON.parse(Buffer.from(cookie.value, 'base64').toString()).counter
+        ).toBe(0);
+      }
+    }
+
+    expect(api.cookies.length).toBe(2);
   });
 });
