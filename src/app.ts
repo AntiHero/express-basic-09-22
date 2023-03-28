@@ -30,9 +30,9 @@ app.use(
 if (process.env.DEPLOY_TO_VERCEL !== 'true') {
   app.use(express.static('./public'));
 }
-app.use('/books', booksRouter);
+app.use('/api/books', booksRouter);
 
-app.get('/counter', (req, res) => {
+app.get('/api/counter', (req, res) => {
   if (req.session) {
     if (req.session.counter === undefined) {
       req.session.counter = 0;
