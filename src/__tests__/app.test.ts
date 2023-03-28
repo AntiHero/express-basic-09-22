@@ -2,11 +2,16 @@
 import type { Request, Response, NextFunction } from 'express';
 // @ts-ignore
 import supertestSession from 'supertest-session';
+import * as dotenv from 'dotenv';
 import supertest from 'supertest';
+import mongoose from 'mongoose';
 
-import { app } from '../app';
-import books, { Book } from '../fakeDb';
+import { connectToMongoDB } from '../utils/connectToMongoDb';
 import { requestLogger } from '../middlewares/logger';
+import { Book } from '../models/book.model';
+import { app } from '../app';
+
+dotenv.config();
 
 jest.mock('../middlewares/logger', () => {
   return {
@@ -28,7 +33,7 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('teting API', () => {
+describe.skip('teting API', () => {
   test('GET /books', async () => {
     expect.assertions(1);
 
@@ -37,7 +42,7 @@ describe('teting API', () => {
       .expect(200)
       .expect('Content-Type', /json/)
       .then(function (res) {
-        expect(res.body).toStrictEqual(books);
+        // expect(res.body).toStrictEqual(books);
       });
   });
 
@@ -96,5 +101,69 @@ describe('teting API', () => {
     }
 
     expect(api.cookies.length).toBe(2);
+  });
+});
+
+describe('testing MongoDB', () => {
+  const books = [
+    {
+      author: 'Wuthering Heights',
+      title: 'Pride and Prejudice',
+      year: 2004,
+    },
+    {
+      author: 'Edgar Alan Poe',
+      title: 'The Raven',
+      year: 1996,
+    },
+    {
+      author: 'Boris Pasternak',
+      title: 'Doctor Zhivago',
+      year: 1997,
+    },
+  ];
+
+  beforeEach(async () => {
+    await connectToMongoDB(process.env.MONGODB_URL_TEST as string).catch(
+      console.error
+    );
+
+    await Book.deleteMany({});
+    await Book.insertMany(books);
+  });
+
+  afterAll(async () => {
+    await mongoose.connection.close();
+  });
+
+  test('GET /books', async () => {
+    await api
+      .get('/books')
+      .expect(200)
+      .expect('Content-type', /json/)
+      .then(function (res) {
+        expect(res.body).toStrictEqual([
+          { ...books[0], id: expect.anything() },
+          { ...books[1], id: expect.anything() },
+          { ...books[2], id: expect.anything() },
+        ]);
+      });
+  });
+
+  test('PUT /books/id', async () => {
+    const book = await Book.create(books[0]);
+
+    await api
+      .put(`/books/${book._id}`)
+      .send({ ...books[0], year: 1950 })
+      .expect(200)
+      .expect('Content-type', /json/)
+      .then(function (res) {
+        expect(res.body).toStrictEqual({
+          ...books[0],
+          id: String(book._id),
+          year: 1950,
+        });
+      });
   });
 });

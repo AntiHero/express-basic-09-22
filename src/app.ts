@@ -1,10 +1,8 @@
 import express, { Response, Request, NextFunction } from 'express';
 import cors from 'cors';
 
-import { requestLogger } from './middlewares/logger';
-import { idGenerator } from './utils/idGenerator';
+import { booksRouter } from './routers/books.router';
 import cookieSession from 'cookie-session';
-import books from './fakeDb';
 
 export const app = express();
 
@@ -30,35 +28,7 @@ app.use(
 
 // staitc
 app.use(express.static('public'));
-
-app.get('/books', requestLogger, (_, res) => {
-  res.json(books);
-});
-
-app.get('/books/:id', (req, res) => {
-  const id = Number(req.params.id);
-
-  books[id - 1] ? res.json(books[id - 1]) : res.sendStatus(404);
-});
-
-app.post('/books', (req, res) => {
-  const { author, title, year } = req.body;
-  books.push({ id: idGenerator(), author, title, year });
-
-  res.sendStatus(204);
-});
-
-app.delete('/books/:id', (req, res) => {
-  const id = Number(req.params.id);
-
-  if (isNaN(id) || id >= books.length) {
-    res.sendStatus(404);
-    return;
-  }
-
-  books[id - 1] = null;
-  res.sendStatus(204);
-});
+app.use('/books', booksRouter);
 
 app.get('/counter', (req, res) => {
   if (req.session) {
