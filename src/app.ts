@@ -27,7 +27,9 @@ app.use(
 // app.use(requestLogger);
 
 // staitc
-app.use(express.static('public'));
+if (process.env.DEPLOY_TO_VERCEL !== 'true') {
+  app.use(express.static('./public'));
+}
 app.use('/books', booksRouter);
 
 app.get('/counter', (req, res) => {
