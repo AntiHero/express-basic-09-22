@@ -15,3 +15,5 @@ connectToMongoDB(MONGODB_URL)
     });
   })
   .catch(() => console.log('Connection error'));
+
+export default app;
